@@ -72,6 +72,7 @@ function EliminarTarea(tarea_id){
                 <div class="container">
                     <p class="title">Mis tareas</p>
                     <p class="subtitle">Organizador de tareas diarias</p>
+                    <h6>version Vue Js 3</h6>
                 </div>
             </div>
          </section>
