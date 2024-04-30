@@ -4,19 +4,19 @@ import { ref, watch } from 'vue'
 const text = ref('')
 const tarea_txt= ref('');
 const prioridad= ref('');
+
 // const lista_tareas = ref [
+// const hideCompleted = ref(false)
+const mostrarSoloPendientes = ref(false)
 const lista_tareas = ref([
-        {'id':0, 'tarea': 'Ejemplo de tarea 1', 'prioridad': 'N'},
-        {'id':1, 'tarea': 'Ejemplo de tarea 2', 'prioridad': 'I'},
-        {'id':2, 'tarea': 'Ejemplo de tarea 3', 'prioridad': 'M'},
-        {'id':3, 'tarea': 'Ejemplo de tarea 4', 'prioridad': 'N'},
-        {'id':4, 'tarea': 'Ejemplo de tarea 5', 'prioridad': 'N'}]);
+        {'id':0, 'tarea': 'Ejemplo de tarea 1', 'prioridad': 'N', done: true},
+        {'id':1, 'tarea': 'Ejemplo de tarea 2', 'prioridad': 'I', done: true},
+        {'id':2, 'tarea': 'Ejemplo de tarea 3', 'prioridad': 'M', done: false},]);
+
 const lista_tareas_original = ref([
-        {'id':0, 'tarea': 'Ejemplo de tarea 1', 'prioridad': 'N'},
-        {'id':1, 'tarea': 'Ejemplo de tarea 2', 'prioridad': 'I'},
-        {'id':2, 'tarea': 'Ejemplo de tarea 3', 'prioridad': 'M'},
-        {'id':3, 'tarea': 'Ejemplo de tarea 4', 'prioridad': 'N'},
-        {'id':4, 'tarea': 'Ejemplo de tarea 5', 'prioridad': 'N'}]);
+        {'id':0, 'tarea': 'Ejemplo de tarea 1', 'prioridad': 'N', done: true},
+        {'id':1, 'tarea': 'Ejemplo de tarea 2', 'prioridad': 'I', done: true},
+        {'id':2, 'tarea': 'Ejemplo de tarea 3', 'prioridad': 'M', done: false},]);
 
 const search_text= ref('');
 const error_msg= ref('');
@@ -25,9 +25,10 @@ function onInput(e) {
   text.value = e.target.value
 };
 
-watch(search_text, (newSearchText) => { BuscarTareas(newSearchText)} )
+watch(search_text, (newSearchText) => { FiltrarTareasPorNombreMasEstado()} )
+watch(mostrarSoloPendientes, (mostrarSoloPendientes) => FiltrarTareasPorNombreMasEstado())
 
-function BuscarTareas(searchText) {
+function FiltrarTareasPorNombre(searchText) {
       if (searchText.trim() === '') {
         lista_tareas.value = [...lista_tareas_original.value];
       } else {
@@ -36,6 +37,23 @@ function BuscarTareas(searchText) {
         });
       }
     };
+
+  function FiltrarTareasPorNombreMasEstado() {
+      let filtroNombreTarea = search_text.value;
+      let filtrarSoloPendientes = mostrarSoloPendientes.value; 
+
+      if (filtroNombreTarea.trim() === '') {
+        lista_tareas.value = [...lista_tareas_original.value];
+      } else {
+        lista_tareas.value = lista_tareas_original.value.filter(unaTarea => {
+          return unaTarea.tarea.toLowerCase().indexOf(filtroNombreTarea.toLowerCase()) >= 0;
+        });
+      }
+
+      if (filtrarSoloPendientes) {
+        lista_tareas.value = lista_tareas.value.filter(unaTarea => { return unaTarea.done == false;});
+      }
+    };    
 
 function AgregarTareas(){
   if (tarea_txt.value.trim() === ''|| prioridad.value.trim() === '') {
@@ -59,6 +77,13 @@ function EliminarTarea(tarea_id){
   lista_tareas.value.splice(index, 1);
   lista_tareas_original.value.splice(index, 1);
 }
+// const mostrarActivos = computed(() => {
+//    return hideCompleted.value
+//     ? lista_tareas_original.value.filter((t) => !t.done)
+//      : lista_tareas_original.value
+// })
+
+
 
 </script>
 
@@ -125,15 +150,33 @@ function EliminarTarea(tarea_id){
                       placeholder="Filtrar tarea">
                     </div>
                   </div>
+                  <div class="field">
+                    <div class="control">
+                      <label class="checkbox">
+                        <input type="checkbox"  v-model="mostrarSoloPendientes">
+                           Mostrar solo tareas pendientes
+                      </label>
+                    </div>
+                  </div>
                   <table class="table is-responsive">
                     <thead>
+                        <th>Completada</th>
                         <th>Tarea</th>
                         <th>Prioridad</th>
                         <th>Acciones</th>
                     </thead>
                     <tbody>
-                      <tr v-for="i in lista_tareas">
-                        <td>{{ i.tarea }}</td>
+                      <tr v-for="i in lista_tareas" :key="i">
+                        <td>
+                          <div class="field">
+                            <div class="control">
+                              <label class="checkbox">
+                                <input type="checkbox" v-model="i.done">
+                              </label>
+                            </div>
+                          </div>
+                        </td>
+                        <td><span :class="{ done: i.done }">{{ i.tarea }}</span></td>
                         <td>
                           <span v-if="i.prioridad === 'N'" class="tag is-info">Normal</span>
                           <span v-else-if="i.prioridad === 'I'" class="tag is-warning">Importante</span>
@@ -152,7 +195,10 @@ function EliminarTarea(tarea_id){
   </div>
 </template>
 
-<style scoped>
+<style>
+.done {
+  text-decoration: line-through;
+}
 
 /* header {
   line-height: 1.5;
